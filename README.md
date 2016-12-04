@@ -14,8 +14,21 @@ I have attached two zip files :
 1) Question_four_hive_table_export_files.zip : Contains all the department wise csv genrated by HIVE which are used for further PIG operations.
 2) Question_Four_output_csv_department_wise.zip : Contains all the department wise output files.
 
-# Please find below process following for this:
+# Explanation of every steps:
+* following HIVE query used to get data from hive table & genrate csv
+1] INSERT OVERWRITE LOCAL DIRECTORY '/home/vishal/Downloads/d001' row format delimited fields terminated by ',' select distinct(de.emp_no),de.dept_no,d.dept_name,e.first_name,dm.emp_no,s.salary from dept_manager as dm left join departments as d on (d.dept_no = dm.dept_no) LEFT JOIN dept_emp as de ON (de.dept_no = d.dept_no) left join salaries as s on (s.emp_no = de.emp_no) left join employees as e on (e.emp_no = dm.emp_no) where dm.dept_no = 'd001' AND dm.to_date = '9999-01-01' AND de.to_date = '9999-01-01'AND s.to_date = '9999-01-01';
 
+2] employee_dept_details = LOAD '/home/vishal/Downloads/d001/000000_0' USING PigStorage(',') as (emp_no:int,dept_no:chararray,dept_name:chararray,first_name:chararray,dmemp_no:int,salary:int); //This steps loads the csv file from local path & genrate structure from it;
+
+3] employee_group = Group employee_dept_details all; // This steps used to group all the data 
+4] employee_salary_sum = foreach employee_group Generate 
+   flatten(employee_dept_details),SUM(employee_dept_details.salary),COUNT(employee_dept_details.emp_no); //This steps genrate the data in the provided format.
+   
+5] STORE employee_salary_sum INTO 'file:///home/vishal/Desktop/d002'; // This steps creates csv file of output.
+
+
+
+# Please find below steps followed for output:
 * Following HIVE query used to get employee details filter by department id i.e d001 from multiple tables:
 INSERT OVERWRITE LOCAL DIRECTORY '/home/vishal/Downloads/d001' row format delimited fields terminated by ',' select distinct(de.emp_no),de.dept_no,d.dept_name,e.first_name,dm.emp_no,s.salary from dept_manager as dm left join departments as d on (d.dept_no = dm.dept_no) LEFT JOIN dept_emp as de ON (de.dept_no = d.dept_no) left join salaries as s on (s.emp_no = de.emp_no) left join employees as e on (e.emp_no = dm.emp_no) where dm.dept_no = 'd001' AND dm.to_date = '9999-01-01' AND de.to_date = '9999-01-01'AND s.to_date = '9999-01-01';
 
